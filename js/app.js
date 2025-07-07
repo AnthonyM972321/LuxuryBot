@@ -657,4 +657,87 @@ function sendPreCheckinMessage() {
 // Initialize the app
 window.addEventListener('load', () => {
     showToast('ai', 'Bienvenue', 'LuxuryBot Ultimate est prêt à transformer votre gestion locative !');
+    // Integration configuration functions
+function connectBooking() {
+    showToast('info', 'Booking.com', 'Redirection vers l\'authentification Booking...');
+    // In real app: window.open('booking-oauth-url', '_blank');
+}
+
+function configureOpenAI() {
+    const apiKey = prompt('Entrez votre clé API OpenAI :');
+    if (apiKey) {
+        localStorage.setItem('openai_api_key', apiKey);
+        showToast('success', 'OpenAI configuré', 'Votre clé API a été enregistrée');
+        // Update button to show connected
+        event.target.textContent = 'Connecté';
+        event.target.classList.remove('btn-secondary');
+        event.target.classList.add('btn-success');
+    }
+}
+
+function configureN8N() {
+    showToast('info', 'n8n', 'Configuration des workflows d\'automatisation...');
+    // You already have this function, but let's make sure it's there
+}
+
+function configureSendGrid() {
+    const apiKey = prompt('Entrez votre clé API SendGrid :');
+    if (apiKey) {
+        localStorage.setItem('sendgrid_api_key', apiKey);
+        showToast('success', 'SendGrid configuré', 'Envoi d\'emails activé');
+    }
+}
+
+function configureStripe() {
+    const apiKey = prompt('Entrez votre clé API Stripe :');
+    if (apiKey) {
+        localStorage.setItem('stripe_api_key', apiKey);
+        showToast('success', 'Stripe configuré', 'Paiements en ligne activés');
+    }
+}
+
+function configureFirebase() {
+    showToast('info', 'Firebase', 'Ouvrez js/firebase-config.js pour configurer Firebase');
+}
+
+// Preview and share functions
+function previewGuide() {
+    showToast('info', 'Aperçu', 'Fonctionnalité en développement');
+}
+
+function shareGuide() {
+    const shareUrl = `${window.location.origin}${window.location.pathname}?property=${state.currentProperty?.id}&lang=${state.currentLanguage}`;
+    
+    if (navigator.share) {
+        navigator.share({
+            title: `Guide ${state.currentProperty?.name}`,
+            text: 'Voici le guide d\'accueil pour votre séjour',
+            url: shareUrl
+        });
+    } else {
+        navigator.clipboard.writeText(shareUrl);
+        showToast('success', 'Lien copié', 'Le lien a été copié dans le presse-papier');
+    }
+}
+
+function exportPDF() {
+    showToast('info', 'Export PDF', 'Installation de jsPDF requise pour cette fonctionnalité');
+}
+
+// Additional helper functions
+function translateAllGuides() {
+    if (!state.currentProperty) {
+        showToast('error', 'Erreur', 'Veuillez sélectionner un logement');
+        return;
+    }
+    
+    showToast('ai', 'Traduction IA', 'Cette fonctionnalité nécessite une clé API OpenAI configurée');
+    
+    // Check if OpenAI is configured
+    const apiKey = localStorage.getItem('openai_api_key');
+    if (!apiKey) {
+        showToast('warning', 'Configuration requise', 'Veuillez configurer OpenAI dans les paramètres');
+        showSection('settings');
+    }
+}
 });
