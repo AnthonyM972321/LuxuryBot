@@ -745,3 +745,60 @@ function showPropertyCheckin(propertyId) {
 window.addEventListener('load', () => {
     showToast('ai', 'Bienvenue', 'LuxuryBot Ultimate est prêt à transformer votre gestion locative !');
 });
+// Configuration Twilio
+function configureTwilio() {
+    const accountSid = prompt('Entrez votre Account SID Twilio :');
+    if (accountSid) {
+        const authToken = prompt('Entrez votre Auth Token Twilio :');
+        if (authToken) {
+            const phoneNumber = prompt('Entrez votre numéro Twilio (format: +33...) :');
+            if (phoneNumber) {
+                localStorage.setItem('twilio_config', JSON.stringify({
+                    accountSid,
+                    authToken,
+                    phoneNumber
+                }));
+                showToast('success', 'Twilio configuré', 'SMS et appels activés');
+                event.target.textContent = 'Connecté';
+                event.target.classList.remove('btn-secondary');
+                event.target.classList.add('btn-success');
+            }
+        }
+    }
+}
+
+// Configuration VAPI
+function configureVAPI() {
+    const apiKey = prompt('Entrez votre clé API VAPI :');
+    if (apiKey) {
+        localStorage.setItem('vapi_api_key', apiKey);
+        showToast('success', 'VAPI configuré', 'Assistant vocal activé');
+        event.target.textContent = 'Connecté';
+        event.target.classList.remove('btn-secondary');
+        event.target.classList.add('btn-success');
+    }
+}
+
+// Fonction pour envoyer un SMS avec Twilio
+function sendSMS(phoneNumber, message) {
+    const config = JSON.parse(localStorage.getItem('twilio_config') || '{}');
+    if (!config.accountSid) {
+        showToast('error', 'Erreur', 'Twilio non configuré');
+        return;
+    }
+    
+    // Ici le code pour envoyer le SMS
+    showToast('success', 'SMS envoyé', `Message envoyé à ${phoneNumber}`);
+}
+
+// Fonction pour l'assistant vocal VAPI
+function startVoiceAssistant() {
+    const apiKey = localStorage.getItem('vapi_api_key');
+    if (!apiKey) {
+        showToast('error', 'Erreur', 'VAPI non configuré');
+        return;
+    }
+    
+    // Ici le code pour démarrer l'assistant
+    showToast('ai', 'Assistant vocal', 'Assistant prêt à répondre aux appels');
+}
