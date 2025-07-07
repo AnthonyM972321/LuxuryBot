@@ -157,6 +157,7 @@ function showImportModal() {
         importInput.focus();
     }
 }
+
 // Form submission with validation
 const propertyForm = document.getElementById('property-form');
 if (propertyForm) {
@@ -321,7 +322,6 @@ function updatePropertySelect() {
         select.appendChild(option);
     });
 }
-
 // Load property guide
 function loadPropertyGuide() {
     const propertyId = document.getElementById('guide-property-select').value;
@@ -387,6 +387,7 @@ function switchLanguage(lang) {
         loadPropertyGuide();
     }
 }
+
 // AI Content Generation
 async function generateAIContent(section) {
     if (!state.currentProperty) {
@@ -654,13 +655,9 @@ function sendPreCheckinMessage() {
     showToast('ai', 'Message pré-rempli', 'Personnalisez et envoyez');
 }
 
-// Initialize the app
-window.addEventListener('load', () => {
-    showToast('ai', 'Bienvenue', 'LuxuryBot Ultimate est prêt à transformer votre gestion locative !');
-    // Integration configuration functions
+// ALL INTEGRATION FUNCTIONS (Global scope)
 function connectBooking() {
     showToast('info', 'Booking.com', 'Redirection vers l\'authentification Booking...');
-    // In real app: window.open('booking-oauth-url', '_blank');
 }
 
 function configureOpenAI() {
@@ -668,7 +665,6 @@ function configureOpenAI() {
     if (apiKey) {
         localStorage.setItem('openai_api_key', apiKey);
         showToast('success', 'OpenAI configuré', 'Votre clé API a été enregistrée');
-        // Update button to show connected
         event.target.textContent = 'Connecté';
         event.target.classList.remove('btn-secondary');
         event.target.classList.add('btn-success');
@@ -677,7 +673,6 @@ function configureOpenAI() {
 
 function configureN8N() {
     showToast('info', 'n8n', 'Configuration des workflows d\'automatisation...');
-    // You already have this function, but let's make sure it's there
 }
 
 function configureSendGrid() {
@@ -700,7 +695,6 @@ function configureFirebase() {
     showToast('info', 'Firebase', 'Ouvrez js/firebase-config.js pour configurer Firebase');
 }
 
-// Preview and share functions
 function previewGuide() {
     showToast('info', 'Aperçu', 'Fonctionnalité en développement');
 }
@@ -724,7 +718,6 @@ function exportPDF() {
     showToast('info', 'Export PDF', 'Installation de jsPDF requise pour cette fonctionnalité');
 }
 
-// Additional helper functions
 function translateAllGuides() {
     if (!state.currentProperty) {
         showToast('error', 'Erreur', 'Veuillez sélectionner un logement');
@@ -733,11 +726,22 @@ function translateAllGuides() {
     
     showToast('ai', 'Traduction IA', 'Cette fonctionnalité nécessite une clé API OpenAI configurée');
     
-    // Check if OpenAI is configured
     const apiKey = localStorage.getItem('openai_api_key');
     if (!apiKey) {
         showToast('warning', 'Configuration requise', 'Veuillez configurer OpenAI dans les paramètres');
         showSection('settings');
     }
 }
+
+function showPropertyReviews(propertyId) {
+    showToast('info', 'Avis', 'Module avis en développement');
+}
+
+function showPropertyCheckin(propertyId) {
+    showToast('info', 'Check-in', 'Module check-in digital en développement');
+}
+
+// Initialize the app
+window.addEventListener('load', () => {
+    showToast('ai', 'Bienvenue', 'LuxuryBot Ultimate est prêt à transformer votre gestion locative !');
 });
