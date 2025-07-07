@@ -169,30 +169,267 @@
             </div>
         </section>
 
-        <!-- Other sections -->
+        <!-- Guides Section -->
         <section id="guides" class="section">
-            <h1>Guides d'accueil</h1>
-            <p>Section guides...</p>
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
+                <h1>Guides d'accueil multilingues</h1>
+                <button class="btn btn-primary" onclick="createNewGuide()">
+                    ➕ Créer un guide
+                </button>
+            </div>
+
+            <div class="form-section">
+                <h3 class="form-section-title">Sélectionnez un logement</h3>
+                <select class="form-select" id="guide-property-select" onchange="loadPropertyGuide()">
+                    <option value="">-- Choisissez un logement --</option>
+                </select>
+            </div>
+
+            <div id="guide-editor" style="display: none;">
+                <div class="language-grid">
+                    <button class="language-btn active" onclick="switchLanguage('fr')">🇫🇷 Français</button>
+                    <button class="language-btn" onclick="switchLanguage('en')">🇬🇧 English</button>
+                    <button class="language-btn" onclick="switchLanguage('es')">🇪🇸 Español</button>
+                    <button class="language-btn" onclick="switchLanguage('de')">🇩🇪 Deutsch</button>
+                    <button class="language-btn" onclick="switchLanguage('it')">🇮🇹 Italiano</button>
+                    <button class="language-btn" onclick="switchLanguage('pt')">🇵🇹 Português</button>
+                    <button class="language-btn" onclick="switchLanguage('nl')">🇳🇱 Nederlands</button>
+                    <button class="language-btn" onclick="switchLanguage('ru')">🇷🇺 Русский</button>
+                    <button class="language-btn" onclick="switchLanguage('zh')">🇨🇳 中文</button>
+                    <button class="language-btn" onclick="switchLanguage('ja')">🇯🇵 日本語</button>
+                    <button class="language-btn" onclick="switchLanguage('ar')">🇸🇦 العربية</button>
+                    <button class="language-btn" onclick="switchLanguage('pl')">🇵🇱 Polski</button>
+                </div>
+
+                <div class="guide-preview">
+                    <div class="guide-header">
+                        <h2 class="guide-title">
+                            <span id="guide-welcome-text">Bienvenue</span> 
+                            <span id="guide-guest-name">[Nom du voyageur]</span> !
+                        </h2>
+                        <div class="guide-subtitle">
+                            <span id="guide-subtitle-text">Guide d'accueil</span> - 
+                            <span id="guide-property-name">[Nom du logement]</span>
+                        </div>
+                    </div>
+
+                    <!-- Guide Sections -->
+                    <div class="guide-section">
+                        <button class="ai-suggestion-btn" onclick="generateAIContent('welcome')">
+                            ✨ Suggestion IA
+                        </button>
+                        <h3 class="guide-section-title">
+                            🎉 <span id="section-welcome">Bienvenue</span>
+                        </h3>
+                        <div class="form-group">
+                            <textarea class="form-textarea" id="guide-welcome" rows="4"></textarea>
+                        </div>
+                    </div>
+
+                    <div class="guide-section">
+                        <button class="ai-suggestion-btn" onclick="generateAIContent('access')">
+                            ✨ Suggestion IA
+                        </button>
+                        <h3 class="guide-section-title">
+                            🔑 <span id="section-access">Accès au logement</span>
+                        </h3>
+                        <div class="form-group">
+                            <textarea class="form-textarea" id="guide-access" rows="6"></textarea>
+                        </div>
+                    </div>
+
+                    <div class="guide-section">
+                        <button class="ai-suggestion-btn" onclick="generateAIContent('equipment')">
+                            ✨ Suggestion IA
+                        </button>
+                        <h3 class="guide-section-title">
+                            🏠 <span id="section-equipment">Équipements</span>
+                        </h3>
+                        <div class="form-group">
+                            <textarea class="form-textarea" id="guide-equipment" rows="8"></textarea>
+                        </div>
+                    </div>
+
+                    <div class="guide-section">
+                        <button class="ai-suggestion-btn" onclick="generateAIContent('neighborhood')">
+                            ✨ Suggestion IA
+                        </button>
+                        <h3 class="guide-section-title">
+                            📍 <span id="section-neighborhood">Le quartier</span>
+                        </h3>
+                        <div class="form-group">
+                            <textarea class="form-textarea" id="guide-neighborhood" rows="8"></textarea>
+                        </div>
+                    </div>
+
+                    <div class="guide-section">
+                        <h3 class="guide-section-title">
+                            🗺️ <span id="section-map">Carte</span>
+                        </h3>
+                        <div class="map-container">
+                            <div id="property-map"></div>
+                        </div>
+                    </div>
+
+                    <div class="guide-section">
+                        <button class="ai-suggestion-btn" onclick="generateAIContent('checkout')">
+                            ✨ Suggestion IA
+                        </button>
+                        <h3 class="guide-section-title">
+                            ✅ <span id="section-checkout">Instructions de départ</span>
+                        </h3>
+                        <div class="form-group">
+                            <textarea class="form-textarea" id="guide-checkout" rows="6"></textarea>
+                        </div>
+                    </div>
+
+                    <div class="guide-section">
+                        <h3 class="guide-section-title">
+                            🆘 <span id="section-emergency">Numéros utiles</span>
+                        </h3>
+                        <div class="form-group">
+                            <textarea class="form-textarea" id="guide-emergency" rows="4"></textarea>
+                        </div>
+                    </div>
+
+                    <!-- Actions -->
+                    <div style="display: flex; gap: 1rem; justify-content: center; margin-top: 2rem;">
+                        <button class="btn btn-primary" onclick="saveGuide()">
+                            💾 Sauvegarder
+                        </button>
+                        <button class="btn btn-secondary" onclick="previewGuide()">
+                            👁️ Aperçu
+                        </button>
+                        <button class="btn btn-info" onclick="shareGuide()">
+                            🔗 Partager
+                        </button>
+                        <button class="btn btn-success" onclick="exportPDF()">
+                            📄 PDF
+                        </button>
+                    </div>
+                </div>
+            </div>
         </section>
 
+        <!-- Messages Section -->
         <section id="messages" class="section">
-            <h1>Messages</h1>
-            <p>Section messages...</p>
+            <h1>Messages & Communication</h1>
+            
+            <div class="dashboard-grid">
+                <div class="stat-card">
+                    <span class="stat-icon">💬</span>
+                    <div class="stat-value">24</div>
+                    <div class="stat-label">Messages aujourd'hui</div>
+                </div>
+                <div class="stat-card">
+                    <span class="stat-icon">⚡</span>
+                    <div class="stat-value">2min</div>
+                    <div class="stat-label">Temps de réponse</div>
+                </div>
+                <div class="stat-card">
+                    <span class="stat-icon">🤖</span>
+                    <div class="stat-value">87%</div>
+                    <div class="stat-label">Réponses auto</div>
+                </div>
+            </div>
+
+            <div class="empty-state" style="margin-top: 2rem;">
+                <div class="empty-state-icon">💬</div>
+                <div class="empty-state-title">Module Messages</div>
+                <div class="empty-state-message">
+                    Gérez vos conversations avec vos voyageurs
+                </div>
+            </div>
         </section>
 
+        <!-- Analytics Section -->
         <section id="analytics" class="section">
-            <h1>Analytiques</h1>
-            <p>Section analytiques...</p>
+            <h1>Tableau de bord analytique</h1>
+            
+            <div class="dashboard-grid">
+                <div class="stat-card">
+                    <span class="stat-icon">💰</span>
+                    <div class="stat-value">€12,450</div>
+                    <div class="stat-label">Revenus ce mois</div>
+                </div>
+                <div class="stat-card">
+                    <span class="stat-icon">📊</span>
+                    <div class="stat-value">89%</div>
+                    <div class="stat-label">Taux d'occupation</div>
+                </div>
+                <div class="stat-card">
+                    <span class="stat-icon">⭐</span>
+                    <div class="stat-value">4.9</div>
+                    <div class="stat-label">Note moyenne</div>
+                </div>
+                <div class="stat-card">
+                    <span class="stat-icon">💸</span>
+                    <div class="stat-value">€145</div>
+                    <div class="stat-label">Prix moyen/nuit</div>
+                </div>
+            </div>
         </section>
 
+        <!-- AI Config Section -->
         <section id="ai-config" class="section">
-            <h1>Configuration IA</h1>
-            <p>Section configuration IA...</p>
+            <h1>Configuration Intelligence Artificielle</h1>
+            
+            <div class="form-section">
+                <h3 class="form-section-title">🤖 Paramètres IA</h3>
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label class="form-label">Modèle IA</label>
+                        <select class="form-select">
+                            <option>GPT-4 (Recommandé)</option>
+                            <option>GPT-3.5 Turbo</option>
+                            <option>Claude 3</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Ton des messages</label>
+                        <select class="form-select">
+                            <option>Professionnel et chaleureux</option>
+                            <option>Amical et décontracté</option>
+                            <option>Formel</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
         </section>
 
+        <!-- Settings Section -->
         <section id="settings" class="section">
             <h1>Paramètres</h1>
-            <p>Section paramètres...</p>
+            
+            <div class="form-section">
+                <h3 class="form-section-title">👤 Profil</h3>
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label class="form-label">Nom</label>
+                        <input type="text" class="form-input" value="Jean Dupont">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Email</label>
+                        <input type="email" class="form-input" value="jean@luxurybot.com">
+                    </div>
+                </div>
+            </div>
+
+            <div class="form-section">
+                <h3 class="form-section-title">🔌 Intégrations</h3>
+                <div style="display: grid; gap: 1rem;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; padding: 1rem; background: white; border-radius: 8px;">
+                        <div style="display: flex; align-items: center; gap: 1rem;">
+                            <span style="font-size: 2rem;">🏠</span>
+                            <div>
+                                <div style="font-weight: 600;">Airbnb</div>
+                                <div style="font-size: 0.875rem; color: #718096;">Synchronisation automatique</div>
+                            </div>
+                        </div>
+                        <button class="btn btn-success">Connecté</button>
+                    </div>
+                </div>
+            </div>
         </section>
     </main>
 
@@ -261,15 +498,7 @@
         </div>
     </div>
 
-    <!-- External Scripts -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
-    
-    <!-- Our Scripts -->
-    <script src="js/translations.js"></script>
-    <script src="js/app.js"></script>
-</body>
-</html>
-<!-- Welcome Modal -->
+    <!-- Welcome Modal -->
     <div class="modal" id="welcome-modal">
         <div class="modal-content">
             <div class="modal-header">
