@@ -1,7 +1,7 @@
-// Firebase Configuration for LuxuryBot 2025
-// IMPORTANT: This API key is PUBLIC but secured by domain restrictions
-// It ONLY works on https://anthonym972321.github.io/* 
-// This is the official Firebase way - API keys are meant to be public in web apps
+// Firebase Configuration for LuxuryBot Ultimate
+// Project: luxurybot-2025
+// This API key is PUBLIC but secured by domain restrictions
+// It ONLY works on https://anthonym972321.github.io/*
 
 // Split the API key to avoid GitHub detection
 const API_PART1 = "AIzaSy";
@@ -27,17 +27,20 @@ if (!allowedDomains.includes(currentDomain) && currentDomain !== '') {
 
 // Initialize Firebase
 try {
+    // Check if Firebase SDK is loaded
     if (typeof firebase !== 'undefined') {
+        // Initialize Firebase app
         firebase.initializeApp(firebaseConfig);
-        console.log('✅ Firebase initialized successfully');
+        console.log('✅ Firebase app initialized successfully');
         
+        // Initialize and expose Firebase services globally
         window.db = firebase.firestore();
         window.auth = firebase.auth();
         
-        console.log('✅ Services ready');
+        console.log('✅ Firestore and Auth services ready');
         
-        // Update UI
-        function updateStatus() {
+        // Update Firebase status indicator if DOM is ready
+        function updateFirebaseStatus() {
             const statusEl = document.getElementById('firebase-status');
             const statusTextEl = document.getElementById('firebase-status-text');
             
@@ -45,25 +48,52 @@ try {
                 statusEl.classList.remove('disconnected');
                 statusEl.classList.add('connected');
                 statusTextEl.textContent = 'Connecté';
+                console.log('✅ Firebase status updated in UI');
             }
         }
         
+        // Update status when DOM is ready
         if (document.readyState === 'loading') {
-            document.addEventListener('DOMContentLoaded', updateStatus);
+            document.addEventListener('DOMContentLoaded', updateFirebaseStatus);
         } else {
-            updateStatus();
+            updateFirebaseStatus();
         }
         
+        // Set flag to indicate Firebase is ready
         window.firebaseReady = true;
+        
+        // Dispatch custom event to notify that Firebase is ready
         window.dispatchEvent(new Event('firebaseReady'));
         
     } else {
-        console.error('❌ Firebase SDK not loaded');
+        console.error('❌ Firebase SDK not loaded. Check your script tags.');
         window.firebaseReady = false;
     }
+    
 } catch (error) {
-    console.error('❌ Firebase initialization error:', error);
+    console.error('❌ Error initializing Firebase:', error);
     window.firebaseReady = false;
+    
+    // Update status to show error
+    if (document.getElementById('firebase-status')) {
+        const statusEl = document.getElementById('firebase-status');
+        const statusTextEl = document.getElementById('firebase-status-text');
+        
+        if (statusEl && statusTextEl) {
+            statusEl.classList.add('disconnected');
+            statusTextEl.textContent = 'Erreur de connexion';
+        }
+    }
 }
 
-console.log('Config loaded for:', currentDomain);
+// Export config for debugging
+window.firebaseConfig = firebaseConfig;
+
+// Log Firebase state
+console.log('Firebase Config loaded:', {
+    projectId: firebaseConfig.projectId,
+    authDomain: firebaseConfig.authDomain,
+    currentDomain: currentDomain,
+    isAllowed: allowedDomains.includes(currentDomain),
+    initialized: window.firebaseReady || false
+});
