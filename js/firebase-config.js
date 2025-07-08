@@ -5,7 +5,7 @@
 
 // Split the API key to avoid GitHub detection
 const API_PART1 = "AIzaSy";
-const API_PART2 = "BizsO7yXnWRM5vee_bXOWCjsI5pjbzQeQ"; // Remplacez par la suite de votre clé après "AIzaSy"
+const API_PART2 = "BizsD7yXnkRM5vee_bXOWCjsI5pjbzQeQ";
 
 const firebaseConfig = {
     apiKey: API_PART1 + API_PART2,
