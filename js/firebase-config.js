@@ -1,73 +1,23 @@
-// Firebase Configuration for LuxuryBot Ultimate
-const firebaseConfig = {
-    apiKey: "AIzaSyCGnfiiKCfGN_tmtBg1Uv1ABXqyzawDQvs",
+<script type="module">
+  // Import the functions you need from the SDKs you need
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/11.10.0/firebase-app.js";
+  import { getAnalytics } from "https://www.gstatic.com/firebasejs/11.10.0/firebase-analytics.js";
+  // TODO: Add SDKs for Firebase products that you want to use
+  // https://firebase.google.com/docs/web/setup#available-libraries
+
+  // Your web app's Firebase configuration
+  // For Firebase JS SDK v7.20.0 and later, measurementId is optional
+  const firebaseConfig = {
+    apiKey: "AIzaSyBxfma1-7PiIOQw-KuOLRTD6g3dui3Rgio",
     authDomain: "luxurybot-75364.firebaseapp.com",
     projectId: "luxurybot-75364",
     storageBucket: "luxurybot-75364.firebasestorage.app",
     messagingSenderId: "281432080913",
-    appId: "1:281432080913:web:9116b14583ead81ba4e7b0",
-    measurementId: "G-K9WB3P58E5"
-};
+    appId: "1:281432080913:web:fee9887502309754a4e7b0",
+    measurementId: "G-JL47XJR3VN"
+  };
 
-// Initialize Firebase only if the SDK is loaded
-if (typeof firebase !== 'undefined') {
-    try {
-        // Initialize Firebase app
-        firebase.initializeApp(firebaseConfig);
-        
-        // Initialize Firestore database
-        const db = firebase.firestore();
-        
-        // Initialize Authentication
-        const auth = firebase.auth();
-        
-        // Make database and auth globally accessible
-        window.db = db;
-        window.auth = auth;
-        
-        // Log success
-        console.log('Firebase initialized successfully');
-        
-        // Update Firebase status indicator after DOM is loaded
-        if (document.readyState === 'loading') {
-            document.addEventListener('DOMContentLoaded', updateFirebaseStatus);
-        } else {
-            updateFirebaseStatus();
-        }
-        
-        function updateFirebaseStatus() {
-            const statusEl = document.getElementById('firebase-status');
-            const statusTextEl = document.getElementById('firebase-status-text');
-            
-            if (statusEl && statusTextEl) {
-                statusEl.classList.remove('disconnected');
-                statusEl.classList.add('connected');
-                statusTextEl.textContent = 'Connecté';
-                
-                // Optional: Show success notification
-                if (typeof showToast === 'function') {
-                    setTimeout(() => {
-                        showToast('success', 'Firebase', 'Base de données connectée');
-                    }, 1000);
-                }
-            }
-        }
-        
-    } catch (error) {
-        console.error('Erreur lors de l\'initialisation de Firebase:', error);
-        
-        // Update status to show error
-        const statusEl = document.getElementById('firebase-status');
-        const statusTextEl = document.getElementById('firebase-status-text');
-        
-        if (statusEl && statusTextEl) {
-            statusEl.classList.add('disconnected');
-            statusTextEl.textContent = 'Erreur de connexion';
-        }
-    }
-} else {
-    console.warn('Firebase SDK not loaded. Please check your script tags.');
-}
-
-// Export config for use in other files if needed
-window.firebaseConfig = firebaseConfig;
+  // Initialize Firebase
+  const app = initializeApp(firebaseConfig);
+  const analytics = getAnalytics(app);
+</script>
