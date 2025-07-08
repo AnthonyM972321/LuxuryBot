@@ -30,3 +30,6 @@ if (typeof firebase !== 'undefined') {
         statusTextEl.textContent = 'Connecté';
     }
 }
+
+// Make db accessible globally
+window.db = db;
