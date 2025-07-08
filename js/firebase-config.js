@@ -1,17 +1,15 @@
 // Firebase Configuration
-// Note: Replace these values with your actual Firebase config
 const firebaseConfig = {
-    apiKey: "YOUR_API_KEY",
-    authDomain: "YOUR_AUTH_DOMAIN",
-    projectId: "YOUR_PROJECT_ID",
-    storageBucket: "YOUR_STORAGE_BUCKET",
-    messagingSenderId: "YOUR_SENDER_ID",
-    appId: "YOUR_APP_ID"
+    apiKey: "AIzaSyCGnf1iKCfGN_tmtBgTUvTABXqyzawDQvs",
+    authDomain: "luxurybot-75364.firebaseapp.com",
+    projectId: "luxurybot-75364",
+    storageBucket: "luxurybot-75364.firebasestorage.app",
+    messagingSenderId: "281432088913",
+    appId: "1:281432088913:web:9116b14583ead81ba4e7b8",
+    measurementId: "G-K9MB3P58E5"
 };
 
-// Initialize Firebase (commented out for now)
-// Uncomment these lines when you have your Firebase project set up
-/*
+// Initialize Firebase
 if (typeof firebase !== 'undefined') {
     firebase.initializeApp(firebaseConfig);
     
@@ -22,8 +20,13 @@ if (typeof firebase !== 'undefined') {
     const auth = firebase.auth();
     
     console.log('Firebase initialized successfully');
+    
+    // Update Firebase status indicator
+    const statusEl = document.getElementById('firebase-status');
+    const statusTextEl = document.getElementById('firebase-status-text');
+    if (statusEl && statusTextEl) {
+        statusEl.classList.remove('disconnected');
+        statusEl.classList.add('connected');
+        statusTextEl.textContent = 'Connecté';
+    }
 }
-*/
-
-// For now, we'll use localStorage as fallback
-console.log('Firebase config loaded - Using localStorage for data persistence');
