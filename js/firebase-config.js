@@ -1,6 +1,6 @@
 // Firebase Configuration for LuxuryBot Ultimate
 const firebaseConfig = {
-    apiKey: "AIzaSyBxTmaI-7PIIOQw-KuOLRTDGg3du13Rgio",
+    apiKey: "AIzaSyBxfma1-7PiIOQw-KuOLRTD6g3dui3Rgio",
     authDomain: "luxurybot-75364.firebaseapp.com",
     projectId: "luxurybot-75364",
     storageBucket: "luxurybot-75364.firebasestorage.app",
