@@ -1,4 +1,4 @@
-// Firebase Configuration
+// Firebase Configuration for LuxuryBot Ultimate
 const firebaseConfig = {
     apiKey: "AIzaSyCGnf1iKCfGN_tmtBgTUvTABXqyzawDQvs",
     authDomain: "luxurybot-75364.firebaseapp.com",
@@ -9,36 +9,62 @@ const firebaseConfig = {
     measurementId: "G-K9MB3P58E5"
 };
 
-// Variables globales
-let db = null;
-let auth = null;
-
-// Initialize Firebase
+// Initialize Firebase only if the SDK is loaded
 if (typeof firebase !== 'undefined') {
     try {
+        // Initialize Firebase app
         firebase.initializeApp(firebaseConfig);
         
-        // Initialize Firestore
-        db = firebase.firestore();
+        // Initialize Firestore database
+        const db = firebase.firestore();
         
-        // Initialize Auth
-        auth = firebase.auth();
+        // Initialize Authentication
+        const auth = firebase.auth();
         
-        // Make them globally accessible
+        // Make database and auth globally accessible
         window.db = db;
         window.auth = auth;
         
+        // Log success
         console.log('Firebase initialized successfully');
         
-        // Update Firebase status indicator
+        // Update Firebase status indicator after DOM is loaded
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', updateFirebaseStatus);
+        } else {
+            updateFirebaseStatus();
+        }
+        
+        function updateFirebaseStatus() {
+            const statusEl = document.getElementById('firebase-status');
+            const statusTextEl = document.getElementById('firebase-status-text');
+            
+            if (statusEl && statusTextEl) {
+                statusEl.classList.remove('disconnected');
+                statusEl.classList.add('connected');
+                statusTextEl.textContent = 'Connecté';
+                
+                // Optional: Show success notification
+                if (typeof showToast === 'function') {
+                    setTimeout(() => {
+                        showToast('success', 'Firebase', 'Base de données connectée');
+                    }, 1000);
+                }
+            }
+        }
+        
+    } catch (error) {
+        console.error('Erreur lors de l\'initialisation de Firebase:', error);
+        
+        // Update status to show error
         const statusEl = document.getElementById('firebase-status');
         const statusTextEl = document.getElementById('firebase-status-text');
+        
         if (statusEl && statusTextEl) {
-            statusEl.classList.remove('disconnected');
-            statusEl.classList.add('connected');
-            statusTextEl.textContent = 'Connecté';
+            statusEl.classList.add('disconnected');
+            statusTextEl.textContent = 'Erreur de connexion';
         }
-    } catch (error) {
-        console.error('Firebase initialization error:', error);
     }
+} else {
+    console.warn('Firebase SDK not loaded. Please check your script tags.');
 }
