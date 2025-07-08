@@ -1,8 +1,6 @@
 // LuxuryBot Ultimate - Application principale
 
-// Global variables
-let db = null;
-let auth = null;
+// Global state
 let state = {
     properties: [],
     guides: {},
@@ -15,60 +13,58 @@ let state = {
     aiGeneratedCount: 0
 };
 
-// Wait for everything to load
-window.addEventListener('load', function() {
-    console.log('Page loaded, initializing Firebase...');
-    initializeFirebase();
+// Wait for Firebase to be ready
+window.addEventListener('firebaseReady', function() {
+    console.log('📱 Firebase ready event received');
+    initializeApp();
 });
 
-// Initialize Firebase
-function initializeFirebase() {
-    if (typeof firebase === 'undefined') {
-        console.error('Firebase SDK not loaded');
-        showLoginPage();
-        return;
-    }
+// Also check on page load in case Firebase is already ready
+window.addEventListener('load', function() {
+    console.log('📄 Page loaded');
     
-    try {
-        // Firebase should already be initialized by firebase-config.js
-        // Just get the references
-        auth = firebase.auth();
-        db = firebase.firestore();
-        
-        window.auth = auth;
-        window.db = db;
-        
-        console.log('Firebase Auth and Firestore ready');
-        
-        // Now initialize the app
+    // If Firebase is already ready, initialize
+    if (window.firebaseReady && window.auth && window.db) {
+        console.log('✅ Firebase already ready, initializing app');
         initializeApp();
-        
-    } catch (error) {
-        console.error('Error getting Firebase references:', error);
-        showLoginPage();
+    } else {
+        console.log('⏳ Waiting for Firebase...');
     }
-}
+});
 
 // Initialize the application
 function initializeApp() {
-    console.log('Initializing app...');
+    console.log('🚀 Initializing LuxuryBot Ultimate...');
+    
+    // Check if already initialized
+    if (window.appInitialized) {
+        console.log('⚠️ App already initialized');
+        return;
+    }
+    
+    window.appInitialized = true;
     
     // Setup authentication state listener
-    auth.onAuthStateChanged((user) => {
-        console.log('Auth state changed:', user ? user.email : 'No user');
-        
-        if (user) {
-            // User is signed in
-            state.currentUser = user;
-            showMainApp();
-            loadUserData();
-            updateUserProfile();
-        } else {
-            // User is signed out
-            state.currentUser = null;
-            showLoginPage();
-        }
-    });
+    if (window.auth) {
+        window.auth.onAuthStateChanged((user) => {
+            console.log('🔐 Auth state changed:', user ? user.email : 'No user');
+            
+            if (user) {
+                // User is signed in
+                state.currentUser = user;
+                showMainApp();
+                loadUserData();
+                updateUserProfile();
+            } else {
+                // User is signed out
+                state.currentUser = null;
+                showLoginPage();
+            }
+        });
+    } else {
+        console.error('❌ Auth not available');
+        showLoginPage();
+    }
     
     // Setup forms
     setupForms();
@@ -87,6 +83,8 @@ function initializeApp() {
         const themeIcon = document.getElementById('theme-icon');
         if (themeIcon) themeIcon.textContent = '☀️';
     }
+    
+    console.log('✅ App initialization complete');
 }
 
 // Setup all forms
@@ -113,17 +111,22 @@ function setupForms() {
 // Authentication functions
 async function handleLogin(e) {
     e.preventDefault();
-    console.log('Login attempt...');
+    console.log('🔑 Login attempt...');
     
     const email = document.getElementById('login-email').value;
     const password = document.getElementById('login-password').value;
     const rememberMe = document.getElementById('remember-me').checked;
     
+    if (!window.auth) {
+        showToast('error', 'Erreur', 'Service d\'authentification non disponible');
+        return;
+    }
+    
     try {
-        const userCredential = await auth.signInWithEmailAndPassword(email, password);
+        const userCredential = await window.auth.signInWithEmailAndPassword(email, password);
         const user = userCredential.user;
         
-        console.log('Login successful:', user.email);
+        console.log('✅ Login successful:', user.email);
         
         if (rememberMe) {
             localStorage.setItem('luxurybot_remember', 'true');
@@ -132,7 +135,7 @@ async function handleLogin(e) {
         showToast('success', 'Connexion réussie', `Bienvenue ${user.email}`);
         
     } catch (error) {
-        console.error('Login error:', error);
+        console.error('❌ Login error:', error);
         let message = 'Erreur de connexion';
         
         switch (error.code) {
@@ -148,6 +151,9 @@ async function handleLogin(e) {
             case 'auth/network-request-failed':
                 message = 'Erreur réseau - Vérifiez votre connexion';
                 break;
+            case 'auth/too-many-requests':
+                message = 'Trop de tentatives - Réessayez plus tard';
+                break;
         }
         
         showToast('error', 'Erreur', message);
@@ -156,12 +162,17 @@ async function handleLogin(e) {
 
 async function handleRegister(e) {
     e.preventDefault();
-    console.log('Register attempt...');
+    console.log('📝 Register attempt...');
     
     const name = document.getElementById('register-name').value;
     const email = document.getElementById('register-email').value;
     const password = document.getElementById('register-password').value;
     const confirmPassword = document.getElementById('register-confirm-password').value;
+    
+    if (!window.auth) {
+        showToast('error', 'Erreur', 'Service d\'authentification non disponible');
+        return;
+    }
     
     if (password !== confirmPassword) {
         showToast('error', 'Erreur', 'Les mots de passe ne correspondent pas');
@@ -174,10 +185,10 @@ async function handleRegister(e) {
     }
     
     try {
-        const userCredential = await auth.createUserWithEmailAndPassword(email, password);
+        const userCredential = await window.auth.createUserWithEmailAndPassword(email, password);
         const user = userCredential.user;
         
-        console.log('User created:', user.email);
+        console.log('✅ User created:', user.email);
         
         // Update user profile
         await user.updateProfile({
@@ -185,8 +196,8 @@ async function handleRegister(e) {
         });
         
         // Create user document in Firestore
-        if (db) {
-            await db.collection('users').doc(user.uid).set({
+        if (window.db) {
+            await window.db.collection('users').doc(user.uid).set({
                 name: name,
                 email: email,
                 createdAt: firebase.firestore.FieldValue.serverTimestamp()
@@ -197,7 +208,7 @@ async function handleRegister(e) {
         closeRegisterModal();
         
     } catch (error) {
-        console.error('Register error:', error);
+        console.error('❌ Register error:', error);
         let message = 'Erreur lors de la création du compte';
         
         switch (error.code) {
@@ -220,13 +231,13 @@ async function handleRegister(e) {
 }
 
 function logout() {
-    if (auth) {
-        auth.signOut().then(() => {
+    if (window.auth) {
+        window.auth.signOut().then(() => {
             showToast('success', 'Déconnexion', 'À bientôt !');
             localStorage.removeItem('luxurybot_remember');
             state.currentUser = null;
         }).catch((error) => {
-            console.error('Logout error:', error);
+            console.error('❌ Logout error:', error);
             showToast('error', 'Erreur', 'Impossible de se déconnecter');
         });
     }
@@ -234,17 +245,24 @@ function logout() {
 
 // UI State Management
 function showMainApp() {
-    console.log('Showing main app...');
-    document.getElementById('login').classList.remove('active');
-    document.getElementById('dashboard').classList.add('active');
-    document.querySelector('.nav').style.display = 'block';
-    document.querySelector('.header').style.display = 'block';
-    document.querySelector('.theme-toggle').style.display = 'flex';
-    document.querySelector('.firebase-status').style.display = 'flex';
+    console.log('🏠 Showing main app...');
+    const loginSection = document.getElementById('login');
+    const dashboardSection = document.getElementById('dashboard');
+    const nav = document.querySelector('.nav');
+    const header = document.querySelector('.header');
+    const themeToggle = document.querySelector('.theme-toggle');
+    const firebaseStatus = document.querySelector('.firebase-status');
+    
+    if (loginSection) loginSection.classList.remove('active');
+    if (dashboardSection) dashboardSection.classList.add('active');
+    if (nav) nav.style.display = 'block';
+    if (header) header.style.display = 'block';
+    if (themeToggle) themeToggle.style.display = 'flex';
+    if (firebaseStatus) firebaseStatus.style.display = 'flex';
 }
 
 function showLoginPage() {
-    console.log('Showing login page...');
+    console.log('🔐 Showing login page...');
     const loginSection = document.getElementById('login');
     if (loginSection) {
         loginSection.classList.add('active');
@@ -288,11 +306,11 @@ function showForgotPassword() {
         return;
     }
     
-    if (auth) {
-        auth.sendPasswordResetEmail(email).then(() => {
+    if (window.auth) {
+        window.auth.sendPasswordResetEmail(email).then(() => {
             showToast('success', 'Email envoyé', 'Vérifiez votre boîte mail pour réinitialiser votre mot de passe');
         }).catch((error) => {
-            console.error('Password reset error:', error);
+            console.error('❌ Password reset error:', error);
             showToast('error', 'Erreur', 'Impossible d\'envoyer l\'email de réinitialisation');
         });
     }
@@ -313,8 +331,8 @@ async function updateProfile() {
             await user.updateProfile({ displayName: name });
             
             // Update in Firestore
-            if (db) {
-                await db.collection('users').doc(user.uid).update({
+            if (window.db) {
+                await window.db.collection('users').doc(user.uid).update({
                     name: name
                 });
             }
@@ -338,7 +356,7 @@ async function updateProfile() {
         showToast('success', 'Profil mis à jour', 'Vos informations ont été sauvegardées');
         
     } catch (error) {
-        console.error('Update profile error:', error);
+        console.error('❌ Update profile error:', error);
         showToast('error', 'Erreur', 'Impossible de mettre à jour le profil');
     }
 }
@@ -356,11 +374,11 @@ function updateUserProfile() {
 
 // Data Management
 async function loadUserData() {
-    if (!state.currentUser || !db) return;
+    if (!state.currentUser || !window.db) return;
     
     try {
         // Load user properties from Firestore
-        const propertiesSnapshot = await db.collection('users')
+        const propertiesSnapshot = await window.db.collection('users')
             .doc(state.currentUser.uid)
             .collection('properties')
             .get();
@@ -371,7 +389,7 @@ async function loadUserData() {
         });
         
         // Load guides
-        const guidesSnapshot = await db.collection('users')
+        const guidesSnapshot = await window.db.collection('users')
             .doc(state.currentUser.uid)
             .collection('guides')
             .get();
@@ -389,7 +407,7 @@ async function loadUserData() {
         renderProperties();
         
     } catch (error) {
-        console.error('Error loading user data:', error);
+        console.error('❌ Error loading user data:', error);
     }
 }
 
@@ -530,8 +548,8 @@ async function handlePropertySubmit(e) {
     };
     
     try {
-        if (db && state.currentUser) {
-            const docRef = await db.collection('users')
+        if (window.db && state.currentUser) {
+            const docRef = await window.db.collection('users')
                 .doc(state.currentUser.uid)
                 .collection('properties')
                 .add(property);
@@ -549,7 +567,7 @@ async function handlePropertySubmit(e) {
         showToast('success', 'Succès', 'Logement ajouté avec succès');
         
     } catch (error) {
-        console.error('Error adding property:', error);
+        console.error('❌ Error adding property:', error);
         showToast('error', 'Erreur', 'Impossible d\'ajouter le logement');
     }
 }
@@ -592,8 +610,8 @@ async function importFromURL() {
     };
     
     try {
-        if (db && state.currentUser) {
-            const docRef = await db.collection('users')
+        if (window.db && state.currentUser) {
+            const docRef = await window.db.collection('users')
                 .doc(state.currentUser.uid)
                 .collection('properties')
                 .add(property);
@@ -610,7 +628,7 @@ async function importFromURL() {
         renderProperties();
         
     } catch (error) {
-        console.error('Error importing property:', error);
+        console.error('❌ Error importing property:', error);
     }
     
     if (loadingEl) loadingEl.classList.remove('active');
@@ -927,8 +945,8 @@ async function saveGuide() {
     };
     
     try {
-        if (db && state.currentUser) {
-            await db.collection('users')
+        if (window.db && state.currentUser) {
+            await window.db.collection('users')
                 .doc(state.currentUser.uid)
                 .collection('guides')
                 .doc(`${state.currentProperty.id}_${state.currentLanguage}`)
@@ -949,7 +967,7 @@ async function saveGuide() {
         showToast('success', 'Guide sauvegardé', 'Le guide a été sauvegardé avec succès');
         
     } catch (error) {
-        console.error('Error saving guide:', error);
+        console.error('❌ Error saving guide:', error);
         showToast('error', 'Erreur', 'Impossible de sauvegarder le guide');
     }
 }
@@ -993,7 +1011,7 @@ function saveToLocalStorage() {
     try {
         localStorage.setItem('luxurybot_state', JSON.stringify(state));
     } catch (error) {
-        console.error('Error saving to localStorage:', error);
+        console.error('❌ Error saving to localStorage:', error);
     }
 }
 
@@ -1005,7 +1023,7 @@ function loadFromLocalStorage() {
             state = { ...state, ...loadedState };
         }
     } catch (error) {
-        console.error('Error loading from localStorage:', error);
+        console.error('❌ Error loading from localStorage:', error);
     }
 }
 
@@ -1250,3 +1268,6 @@ window.configureVAPI = configureVAPI;
 window.selectProperty = selectProperty;
 window.showPropertyReviews = showPropertyReviews;
 window.showPropertyCheckin = showPropertyCheckin;
+
+// Log app loading
+console.log('🏁 LuxuryBot Ultimate app.js loaded - waiting for Firebase...');
