@@ -1,11 +1,29 @@
 // LuxuryBot Ultimate - Application principale
 
+// Initialize Firebase at the very beginning
+let db = null;
+let auth = null;
+
+if (typeof firebase !== 'undefined' && window.firebaseConfig) {
+    try {
+        firebase.initializeApp(window.firebaseConfig);
+        db = firebase.firestore();
+        auth = firebase.auth();
+        window.db = db;
+        window.auth = auth;
+        console.log('Firebase initialized successfully in app.js');
+    } catch (error) {
+        console.error('Firebase initialization error:', error);
+    }
+}
+
 // Global state
 let state = {
     properties: [],
     guides: {},
     currentProperty: null,
     currentLanguage: 'fr',
+    currentUser: null,
     map: null,
     markers: {},
     firebaseConnected: false,
@@ -15,13 +33,46 @@ let state = {
 // Initialize app
 document.addEventListener('DOMContentLoaded', function() {
     try {
+        // Setup authentication listener first
+        if (auth) {
+            auth.onAuthStateChanged((user) => {
+                if (user) {
+                    // User is signed in
+                    state.currentUser = user;
+                    console.log('User authenticated:', user.email);
+                    showMainApp();
+                    loadUserData();
+                    updateUserProfile();
+                } else {
+                    // User is signed out
+                    state.currentUser = null;
+                    showLoginPage();
+                }
+            });
+        } else {
+            console.error('Firebase Auth not initialized');
+            showLoginPage();
+        }
+        
+        // Setup login form
+        const loginForm = document.getElementById('login-form');
+        if (loginForm) {
+            loginForm.addEventListener('submit', handleLogin);
+        }
+        
+        // Setup register form
+        const registerForm = document.getElementById('register-form');
+        if (registerForm) {
+            registerForm.addEventListener('submit', handleRegister);
+        }
+        
         // Load saved data
         loadFromLocalStorage();
         updateDashboard();
         initializeMap();
         
-        // Start Firebase simulation
-        simulateFirebaseSync();
+        // Check saved integrations
+        checkSavedIntegrations();
         
         // Update weather
         updateWeather();
@@ -29,33 +80,256 @@ document.addEventListener('DOMContentLoaded', function() {
         // Update weather every 30 minutes
         setInterval(updateWeather, 30 * 60 * 1000);
         
-        // Check if first visit
-        const welcomeModal = document.getElementById('welcome-modal');
-        if (!localStorage.getItem('luxurybot_visited')) {
-            localStorage.setItem('luxurybot_visited', 'true');
-            if (welcomeModal) {
-                welcomeModal.classList.add('active');
-            }
-        } else {
-            if (welcomeModal) {
-                welcomeModal.classList.remove('active');
-            }
+        // Initialize property form
+        const propertyForm = document.getElementById('property-form');
+        if (propertyForm) {
+            propertyForm.addEventListener('submit', handlePropertySubmit);
         }
-        
-        // Initialize signature pad when modal opens
-        document.addEventListener('click', function(e) {
-            if (e.target.matches('[onclick*="showPropertyCheckin"]')) {
-                setTimeout(initSignaturePad, 100);
-            }
-        });
-        
-        // Check saved integrations on load
-        checkSavedIntegrations();
         
     } catch (error) {
         console.error('Initialization error:', error);
     }
 });
+
+// Authentication functions
+async function handleLogin(e) {
+    e.preventDefault();
+    
+    const email = document.getElementById('login-email').value;
+    const password = document.getElementById('login-password').value;
+    const rememberMe = document.getElementById('remember-me').checked;
+    
+    try {
+        const userCredential = await auth.signInWithEmailAndPassword(email, password);
+        const user = userCredential.user;
+        
+        if (rememberMe) {
+            localStorage.setItem('luxurybot_remember', 'true');
+        }
+        
+        showToast('success', 'Connexion réussie', `Bienvenue ${user.email}`);
+        
+    } catch (error) {
+        let message = 'Erreur de connexion';
+        if (error.code === 'auth/user-not-found') {
+            message = 'Utilisateur non trouvé';
+        } else if (error.code === 'auth/wrong-password') {
+            message = 'Mot de passe incorrect';
+        } else if (error.code === 'auth/invalid-email') {
+            message = 'Email invalide';
+        }
+        showToast('error', 'Erreur', message);
+    }
+}
+
+async function handleRegister(e) {
+    e.preventDefault();
+    
+    const name = document.getElementById('register-name').value;
+    const email = document.getElementById('register-email').value;
+    const password = document.getElementById('register-password').value;
+    const confirmPassword = document.getElementById('register-confirm-password').value;
+    
+    if (password !== confirmPassword) {
+        showToast('error', 'Erreur', 'Les mots de passe ne correspondent pas');
+        return;
+    }
+    
+    if (password.length < 6) {
+        showToast('error', 'Erreur', 'Le mot de passe doit contenir au moins 6 caractères');
+        return;
+    }
+    
+    try {
+        const userCredential = await auth.createUserWithEmailAndPassword(email, password);
+        const user = userCredential.user;
+        
+        // Update user profile
+        await user.updateProfile({
+            displayName: name
+        });
+        
+        // Create user document in Firestore
+        if (db) {
+            await db.collection('users').doc(user.uid).set({
+                name: name,
+                email: email,
+                createdAt: firebase.firestore.FieldValue.serverTimestamp()
+            });
+        }
+        
+        showToast('success', 'Compte créé', 'Votre compte a été créé avec succès');
+        closeRegisterModal();
+        
+    } catch (error) {
+        let message = 'Erreur lors de la création du compte';
+        if (error.code === 'auth/email-already-in-use') {
+            message = 'Cet email est déjà utilisé';
+        } else if (error.code === 'auth/invalid-email') {
+            message = 'Email invalide';
+        } else if (error.code === 'auth/weak-password') {
+            message = 'Mot de passe trop faible';
+        }
+        showToast('error', 'Erreur', message);
+    }
+}
+
+function logout() {
+    if (auth) {
+        auth.signOut().then(() => {
+            showToast('success', 'Déconnexion', 'À bientôt !');
+            localStorage.removeItem('luxurybot_remember');
+            state.currentUser = null;
+        }).catch((error) => {
+            showToast('error', 'Erreur', 'Impossible de se déconnecter');
+        });
+    }
+}
+
+function showMainApp() {
+    // Hide login, show main app
+    document.getElementById('login').classList.remove('active');
+    document.getElementById('dashboard').classList.add('active');
+    document.querySelector('.nav').style.display = 'block';
+    document.querySelector('.header').style.display = 'block';
+    document.querySelector('.theme-toggle').style.display = 'flex';
+    document.querySelector('.firebase-status').style.display = 'flex';
+}
+
+function showLoginPage() {
+    // Show login, hide main app
+    document.getElementById('login').classList.add('active');
+    document.querySelectorAll('.section:not(#login)').forEach(section => {
+        section.classList.remove('active');
+    });
+    document.querySelector('.nav').style.display = 'none';
+    document.querySelector('.header').style.display = 'none';
+    document.querySelector('.theme-toggle').style.display = 'none';
+    document.querySelector('.firebase-status').style.display = 'none';
+}
+
+function showRegister() {
+    const modal = document.getElementById('register-modal');
+    if (modal) {
+        modal.classList.add('active');
+    }
+}
+
+function closeRegisterModal() {
+    const modal = document.getElementById('register-modal');
+    if (modal) {
+        modal.classList.remove('active');
+        document.getElementById('register-form').reset();
+    }
+}
+
+function showForgotPassword() {
+    const email = document.getElementById('login-email').value;
+    if (!email) {
+        showToast('error', 'Erreur', 'Veuillez entrer votre email d\'abord');
+        return;
+    }
+    
+    if (auth) {
+        auth.sendPasswordResetEmail(email).then(() => {
+            showToast('success', 'Email envoyé', 'Vérifiez votre boîte mail pour réinitialiser votre mot de passe');
+        }).catch((error) => {
+            showToast('error', 'Erreur', 'Impossible d\'envoyer l\'email de réinitialisation');
+        });
+    }
+}
+
+async function updateProfile() {
+    const user = state.currentUser;
+    if (!user) return;
+    
+    const name = document.getElementById('user-name').value;
+    const newPassword = document.getElementById('new-password').value;
+    const confirmPassword = document.getElementById('confirm-password').value;
+    
+    try {
+        // Update display name
+        if (name && name !== user.displayName) {
+            await user.updateProfile({ displayName: name });
+            
+            // Update in Firestore
+            if (db) {
+                await db.collection('users').doc(user.uid).update({
+                    name: name
+                });
+            }
+        }
+        
+        // Update password
+        if (newPassword) {
+            if (newPassword !== confirmPassword) {
+                showToast('error', 'Erreur', 'Les mots de passe ne correspondent pas');
+                return;
+            }
+            if (newPassword.length < 6) {
+                showToast('error', 'Erreur', 'Le mot de passe doit contenir au moins 6 caractères');
+                return;
+            }
+            await user.updatePassword(newPassword);
+            document.getElementById('new-password').value = '';
+            document.getElementById('confirm-password').value = '';
+        }
+        
+        showToast('success', 'Profil mis à jour', 'Vos informations ont été sauvegardées');
+        
+    } catch (error) {
+        showToast('error', 'Erreur', 'Impossible de mettre à jour le profil');
+    }
+}
+
+function updateUserProfile() {
+    const user = state.currentUser;
+    if (user) {
+        const nameInput = document.getElementById('user-name');
+        const emailInput = document.getElementById('user-email');
+        
+        if (nameInput) nameInput.value = user.displayName || '';
+        if (emailInput) emailInput.value = user.email || '';
+    }
+}
+
+async function loadUserData() {
+    if (!state.currentUser || !db) return;
+    
+    try {
+        // Load user properties from Firestore
+        const propertiesSnapshot = await db.collection('users')
+            .doc(state.currentUser.uid)
+            .collection('properties')
+            .get();
+            
+        state.properties = [];
+        propertiesSnapshot.forEach(doc => {
+            state.properties.push({ id: doc.id, ...doc.data() });
+        });
+        
+        // Load guides
+        const guidesSnapshot = await db.collection('users')
+            .doc(state.currentUser.uid)
+            .collection('guides')
+            .get();
+            
+        state.guides = {};
+        guidesSnapshot.forEach(doc => {
+            const data = doc.data();
+            if (!state.guides[data.propertyId]) {
+                state.guides[data.propertyId] = {};
+            }
+            state.guides[data.propertyId][data.language] = data.content;
+        });
+        
+        updateDashboard();
+        renderProperties();
+        
+    } catch (error) {
+        console.error('Error loading user data:', error);
+    }
+}
 
 // Check and display saved integrations
 function checkSavedIntegrations() {
@@ -218,22 +492,33 @@ function showImportModal() {
 }
 
 // Form submission with validation
-const propertyForm = document.getElementById('property-form');
-if (propertyForm) {
-    propertyForm.addEventListener('submit', function(e) {
-        e.preventDefault();
-        
-        const property = {
-            id: Date.now(),
-            name: document.getElementById('property-name')?.value || 'Sans nom',
-            type: document.getElementById('property-type')?.value || 'apartment',
-            address: document.getElementById('property-address')?.value || 'Non spécifié',
-            bedrooms: parseInt(document.getElementById('property-bedrooms')?.value || 1),
-            bathrooms: parseInt(document.getElementById('property-bathrooms')?.value || 1),
-            capacity: parseInt(document.getElementById('property-capacity')?.value || 2),
-            status: 'available',
-            createdAt: new Date().toISOString()
-        };
+async function handlePropertySubmit(e) {
+    e.preventDefault();
+    
+    const property = {
+        name: document.getElementById('property-name')?.value || 'Sans nom',
+        type: document.getElementById('property-type')?.value || 'apartment',
+        address: document.getElementById('property-address')?.value || 'Non spécifié',
+        bedrooms: parseInt(document.getElementById('property-bedrooms')?.value || 1),
+        bathrooms: parseInt(document.getElementById('property-bathrooms')?.value || 1),
+        capacity: parseInt(document.getElementById('property-capacity')?.value || 2),
+        status: 'available',
+        createdAt: new Date().toISOString()
+    };
+    
+    try {
+        if (db && state.currentUser) {
+            // Save to Firestore
+            const docRef = await db.collection('users')
+                .doc(state.currentUser.uid)
+                .collection('properties')
+                .add(property);
+            
+            property.id = docRef.id;
+        } else {
+            // Fallback to local storage
+            property.id = Date.now();
+        }
         
         state.properties.push(property);
         saveToLocalStorage();
@@ -241,7 +526,11 @@ if (propertyForm) {
         renderProperties();
         closePropertyModal();
         showToast('success', 'Succès', 'Logement ajouté avec succès');
-    });
+        
+    } catch (error) {
+        console.error('Error adding property:', error);
+        showToast('error', 'Erreur', 'Impossible d\'ajouter le logement');
+    }
 }
 
 // Import from URL
@@ -271,7 +560,6 @@ async function importFromURL() {
     
     // Create imported property
     const property = {
-        id: Date.now(),
         name: 'Appartement Vue Mer - Côte d\'Azur',
         type: 'apartment',
         address: 'Nice, France',
@@ -284,11 +572,28 @@ async function importFromURL() {
         createdAt: new Date().toISOString()
     };
     
-    state.properties.push(property);
-    state.aiGeneratedCount++;
-    saveToLocalStorage();
-    updateDashboard();
-    renderProperties();
+    try {
+        if (db && state.currentUser) {
+            // Save to Firestore
+            const docRef = await db.collection('users')
+                .doc(state.currentUser.uid)
+                .collection('properties')
+                .add(property);
+            
+            property.id = docRef.id;
+        } else {
+            property.id = Date.now();
+        }
+        
+        state.properties.push(property);
+        state.aiGeneratedCount++;
+        saveToLocalStorage();
+        updateDashboard();
+        renderProperties();
+        
+    } catch (error) {
+        console.error('Error importing property:', error);
+    }
     
     // Hide loading and clear input
     document.getElementById('ai-loading').classList.remove('active');
@@ -320,7 +625,7 @@ function renderProperties() {
     }
     
     grid.innerHTML = state.properties.map(property => `
-        <div class="property-card" onclick="selectProperty(${property.id})">
+        <div class="property-card" onclick="selectProperty('${property.id}')">
             <div class="property-image">
                 ${property.imported ? '<div class="property-badges"><span class="property-badge">Importé</span></div>' : ''}
                 🏠
@@ -350,8 +655,8 @@ function renderProperties() {
                     </div>
                 </div>
                 <div style="display: flex; gap: 0.5rem; margin-top: 1rem;">
-                    <button class="btn btn-sm btn-primary" onclick="event.stopPropagation(); showPropertyReviews(${property.id})">⭐ Avis</button>
-                    <button class="btn btn-sm btn-info" onclick="event.stopPropagation(); showPropertyCheckin(${property.id})">✅ Check-in</button>
+                    <button class="btn btn-sm btn-primary" onclick="event.stopPropagation(); showPropertyReviews('${property.id}')">⭐ Avis</button>
+                    <button class="btn btn-sm btn-info" onclick="event.stopPropagation(); showPropertyCheckin('${property.id}')">✅ Check-in</button>
                     <span class="sync-indicator synced">☁️ Synchronisé</span>
                 </div>
             </div>
@@ -390,7 +695,7 @@ function loadPropertyGuide() {
         return;
     }
     
-    const property = state.properties.find(p => p.id === parseInt(propertyId));
+    const property = state.properties.find(p => p.id === propertyId);
     if (!property) return;
     
     state.currentProperty = property;
@@ -574,7 +879,7 @@ Nous espérons que vous avez passé un excellent séjour !`
 }
 
 // Save guide
-function saveGuide() {
+async function saveGuide() {
     if (!state.currentProperty) {
         showToast('error', 'Erreur', 'Veuillez sélectionner un logement');
         return;
@@ -589,14 +894,34 @@ function saveGuide() {
         emergency: document.getElementById('guide-emergency').value
     };
     
-    if (!state.guides[state.currentProperty.id]) {
-        state.guides[state.currentProperty.id] = {};
+    try {
+        if (db && state.currentUser) {
+            // Save to Firestore
+            await db.collection('users')
+                .doc(state.currentUser.uid)
+                .collection('guides')
+                .doc(`${state.currentProperty.id}_${state.currentLanguage}`)
+                .set({
+                    propertyId: state.currentProperty.id,
+                    language: state.currentLanguage,
+                    content: guide,
+                    updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+                });
+        }
+        
+        // Also save locally
+        if (!state.guides[state.currentProperty.id]) {
+            state.guides[state.currentProperty.id] = {};
+        }
+        state.guides[state.currentProperty.id][state.currentLanguage] = guide;
+        saveToLocalStorage();
+        updateDashboard();
+        showToast('success', 'Guide sauvegardé', 'Le guide a été sauvegardé avec succès');
+        
+    } catch (error) {
+        console.error('Error saving guide:', error);
+        showToast('error', 'Erreur', 'Impossible de sauvegarder le guide');
     }
-    
-    state.guides[state.currentProperty.id][state.currentLanguage] = guide;
-    saveToLocalStorage();
-    updateDashboard();
-    showToast('success', 'Guide sauvegardé', 'Le guide a été sauvegardé avec succès');
 }
 
 // Toast notifications
@@ -672,32 +997,6 @@ function initializeMap() {
                 </div>
             </div>
         `;
-    }
-}
-
-// Firebase simulation
-function simulateFirebaseSync() {
-    const status = document.getElementById('firebase-status');
-    const statusText = document.getElementById('firebase-status-text');
-    
-    // Check if Firebase is actually connected
-    if (typeof firebase !== 'undefined' && window.db) {
-        // Firebase is properly initialized
-        if (status && statusText) {
-            status.classList.remove('disconnected');
-            status.classList.add('connected');
-            statusText.textContent = 'Connecté';
-        }
-    } else {
-        // Simulate connection after 3 seconds if Firebase not loaded
-        setTimeout(() => {
-            if (status && statusText) {
-                status.classList.remove('disconnected');
-                status.classList.add('connected');
-                statusText.textContent = 'Connecté';
-                showToast('success', 'Firebase', 'Connexion établie - Synchronisation activée');
-            }
-        }, 3000);
     }
 }
 
@@ -875,25 +1174,20 @@ function showPropertyCheckin(propertyId) {
     showToast('info', 'Check-in', 'Module check-in digital en développement');
 }
 
-// Initialize the app
-window.addEventListener('load', () => {
-    showToast('ai', 'Bienvenue', 'LuxuryBot Ultimate est prêt à transformer votre gestion locative !');
-});
-// Vérifier les intégrations après un délai pour s'assurer que le DOM est prêt
+// Check integrations after page load
 window.addEventListener('load', function() {
     setTimeout(function() {
-        // Si on est sur la page des paramètres au chargement
+        // If on settings page at load
         if (document.querySelector('#settings.section.active')) {
             checkSavedIntegrations();
         }
     }, 500);
 });
 
-// Observer les changements du DOM pour mettre à jour les boutons
+// Observer for DOM changes
 const observer = new MutationObserver(function(mutations) {
     mutations.forEach(function(mutation) {
         if (mutation.type === 'childList') {
-            // Vérifier si des boutons d'intégration ont été ajoutés
             const settingsSection = document.querySelector('#settings.section.active');
             if (settingsSection) {
                 checkSavedIntegrations();
@@ -902,8 +1196,16 @@ const observer = new MutationObserver(function(mutations) {
     });
 });
 
-// Démarrer l'observation
+// Start observing
 observer.observe(document.body, {
     childList: true,
     subtree: true
+});
+
+// Initialize the app
+window.addEventListener('load', () => {
+    // Welcome message only if logged in
+    if (state.currentUser) {
+        showToast('ai', 'Bienvenue', 'LuxuryBot Ultimate est prêt à transformer votre gestion locative !');
+    }
 });
