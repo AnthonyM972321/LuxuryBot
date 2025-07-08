@@ -1,12 +1,12 @@
 // Firebase Configuration for LuxuryBot Ultimate
 const firebaseConfig = {
-    apiKey: "AIzaSyCGnfiiKCfGN_tmtBg1Uv1ABXqyzawDQvs",
+    apiKey: "AIzaSyBxTmaI-7PIIOQw-KuOLRTDGg3du13Rgio",
     authDomain: "luxurybot-75364.firebaseapp.com",
     projectId: "luxurybot-75364",
     storageBucket: "luxurybot-75364.firebasestorage.app",
     messagingSenderId: "281432080913",
-    appId: "1:281432080913:web:9116b14583ead81ba4e7b0",
-    measurementId: "G-K9WB3P58E5"
+    appId: "1:281432080913:web:fee98875d23d9754a4e7b0",
+    measurementId: "G-JL47XJRGVN"
 };
 
 // Initialize Firebase immediately when this script loads
