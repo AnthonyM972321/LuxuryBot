@@ -879,3 +879,31 @@ function showPropertyCheckin(propertyId) {
 window.addEventListener('load', () => {
     showToast('ai', 'Bienvenue', 'LuxuryBot Ultimate est prêt à transformer votre gestion locative !');
 });
+// Vérifier les intégrations après un délai pour s'assurer que le DOM est prêt
+window.addEventListener('load', function() {
+    setTimeout(function() {
+        // Si on est sur la page des paramètres au chargement
+        if (document.querySelector('#settings.section.active')) {
+            checkSavedIntegrations();
+        }
+    }, 500);
+});
+
+// Observer les changements du DOM pour mettre à jour les boutons
+const observer = new MutationObserver(function(mutations) {
+    mutations.forEach(function(mutation) {
+        if (mutation.type === 'childList') {
+            // Vérifier si des boutons d'intégration ont été ajoutés
+            const settingsSection = document.querySelector('#settings.section.active');
+            if (settingsSection) {
+                checkSavedIntegrations();
+            }
+        }
+    });
+});
+
+// Démarrer l'observation
+observer.observe(document.body, {
+    childList: true,
+    subtree: true
+});
