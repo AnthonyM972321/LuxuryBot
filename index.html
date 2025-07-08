@@ -27,6 +27,9 @@
                     <div>Suggestions IA</div>
                 </div>
             </div>
+            <button class="btn btn-sm btn-secondary" onclick="logout()" style="margin-left: auto;">
+                🚪 Déconnexion
+            </button>
         </div>
     </header>
 
@@ -74,7 +77,7 @@
     <!-- Main Content -->
     <main class="main-content">
         <!-- Dashboard Section -->
-        <section id="dashboard" class="section active">
+        <section id="dashboard" class="section">
             <h1>Tableau de bord intelligent</h1>
 
             <!-- Import Section -->
@@ -406,13 +409,24 @@
                 <div class="form-grid">
                     <div class="form-group">
                         <label class="form-label">Nom</label>
-                        <input type="text" class="form-input" value="Jean Dupont">
+                        <input type="text" class="form-input" id="user-name" value="">
                     </div>
                     <div class="form-group">
                         <label class="form-label">Email</label>
-                        <input type="email" class="form-input" value="jean@luxurybot.com">
+                        <input type="email" class="form-input" id="user-email" value="" readonly>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Nouveau mot de passe</label>
+                        <input type="password" class="form-input" id="new-password" placeholder="Laisser vide pour ne pas changer">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Confirmer le mot de passe</label>
+                        <input type="password" class="form-input" id="confirm-password" placeholder="Confirmez le nouveau mot de passe">
                     </div>
                 </div>
+                <button class="btn btn-primary" onclick="updateProfile()">
+                    💾 Sauvegarder le profil
+                </button>
             </div>
 
             <div class="form-section">
@@ -513,6 +527,54 @@
             </div>
             </div>
         </section>
+
+        <!-- Login Section -->
+        <section id="login" class="section active">
+            <div class="login-container">
+                <div class="login-box">
+                    <div class="login-header">
+                        <h1 class="login-title">🔐 Connexion</h1>
+                        <p class="login-subtitle">Bienvenue sur LuxuryBot Ultimate</p>
+                    </div>
+                    
+                    <form id="login-form" class="login-form">
+                        <div class="form-group">
+                            <label class="form-label">Email</label>
+                            <input type="email" class="form-input" id="login-email" required 
+                                   placeholder="votre@email.com">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label class="form-label">Mot de passe</label>
+                            <input type="password" class="form-input" id="login-password" required 
+                                   placeholder="••••••••">
+                        </div>
+                        
+                        <div class="form-group" style="display: flex; justify-content: space-between; align-items: center;">
+                            <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer;">
+                                <input type="checkbox" id="remember-me">
+                                Se souvenir de moi
+                            </label>
+                            <a href="#" onclick="showForgotPassword()" style="color: var(--primary); text-decoration: none;">
+                                Mot de passe oublié ?
+                            </a>
+                        </div>
+                        
+                        <button type="submit" class="btn btn-primary" style="width: 100%; margin-top: 1rem;">
+                            Se connecter
+                        </button>
+                        
+                        <div style="text-align: center; margin-top: 1.5rem;">
+                            <p style="color: #718096;">Pas encore de compte ?</p>
+                            <button type="button" class="btn btn-secondary" onclick="showRegister()">
+                                Créer un compte
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </section>
+
     </main>
 
     <!-- Modals -->
@@ -626,6 +688,39 @@
                         </button>
                     </div>
                 </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Register Modal -->
+    <div class="modal" id="register-modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 class="modal-title">📝 Créer un compte</h2>
+                <span class="modal-close" onclick="closeRegisterModal()">✕</span>
+            </div>
+            <div class="modal-body">
+                <form id="register-form">
+                    <div class="form-group">
+                        <label class="form-label">Nom complet</label>
+                        <input type="text" class="form-input" id="register-name" required>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Email</label>
+                        <input type="email" class="form-input" id="register-email" required>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Mot de passe</label>
+                        <input type="password" class="form-input" id="register-password" required>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Confirmer le mot de passe</label>
+                        <input type="password" class="form-input" id="register-confirm-password" required>
+                    </div>
+                    <button type="submit" class="btn btn-primary" style="width: 100%; margin-top: 1rem;">
+                        Créer mon compte
+                    </button>
+                </form>
             </div>
         </div>
     </div>
