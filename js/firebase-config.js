@@ -9,27 +9,36 @@ const firebaseConfig = {
     measurementId: "G-K9MB3P58E5"
 };
 
+// Variables globales
+let db = null;
+let auth = null;
+
 // Initialize Firebase
 if (typeof firebase !== 'undefined') {
-    firebase.initializeApp(firebaseConfig);
-    
-    // Initialize Firestore
-    const db = firebase.firestore();
-    
-    // Initialize Auth
-    const auth = firebase.auth();
-    
-    console.log('Firebase initialized successfully');
-    
-    // Update Firebase status indicator
-    const statusEl = document.getElementById('firebase-status');
-    const statusTextEl = document.getElementById('firebase-status-text');
-    if (statusEl && statusTextEl) {
-        statusEl.classList.remove('disconnected');
-        statusEl.classList.add('connected');
-        statusTextEl.textContent = 'Connecté';
+    try {
+        firebase.initializeApp(firebaseConfig);
+        
+        // Initialize Firestore
+        db = firebase.firestore();
+        
+        // Initialize Auth
+        auth = firebase.auth();
+        
+        // Make them globally accessible
+        window.db = db;
+        window.auth = auth;
+        
+        console.log('Firebase initialized successfully');
+        
+        // Update Firebase status indicator
+        const statusEl = document.getElementById('firebase-status');
+        const statusTextEl = document.getElementById('firebase-status-text');
+        if (statusEl && statusTextEl) {
+            statusEl.classList.remove('disconnected');
+            statusEl.classList.add('connected');
+            statusTextEl.textContent = 'Connecté';
+        }
+    } catch (error) {
+        console.error('Firebase initialization error:', error);
     }
 }
-
-// Make db accessible globally
-window.db = db;
