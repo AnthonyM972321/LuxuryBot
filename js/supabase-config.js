@@ -2,7 +2,7 @@
 // Remplacez les valeurs XXXXX par vos vraies valeurs
 
 const SUPABASE_URL = 'https://aimmdxlgjfuknbcwugza.supabase.co';
-const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJ3aGJmemZpanJjeml6bGhhYndnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzM4NDI0ODgsImV4cCI6MjA0OTQxODQ4OH0.9n8Y7z7bBOj0vmShWOsJ8H7mFQHnKyq-uT5OWl2qtGE'; // Votre clé anon
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFpbW1keGxnamZ1a25iY3d1Z3phIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTIwNTk5MzQsImV4cCI6MjA2NzYzNTkzNH0.RoVT0zcXXG_YvdpaniAco2migyQfxrm_hAoKU8zF1nA';
 
 // Initialize Supabase client
 let supabase;
